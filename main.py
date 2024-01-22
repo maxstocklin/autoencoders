@@ -4,8 +4,10 @@ sys.path.append("models")
 sys.path.append("visualization")
 sys.path.append("preprocessing")
 
-# from preprocessing import preprocess_data
+from preprocessing import preprocess_data, preprocess_autoencoder
 from visualization import visualize_data
+from train import train_xgb, tune_lgbm
+from autoencoder_ml import autoencode_this
 
 
 import xgboost as xgb
@@ -44,11 +46,12 @@ def main():
 			print("Usage: python test.py <filename>")
 			sys.exit(1)
 		dataset = pd.read_csv(sys.argv[1])
-		visualize_data(dataset)
-
-		X = dataset.drop('Class', axis=1)
-		y = dataset['Class']
-
+		#visualize_data(dataset)
+		X_train, X_test, X_val, y_test, normal_test_data, anomaly_test_data = preprocess_autoencoder(dataset)
+		autoencode_this(X_train, X_test, X_val, y_test, normal_test_data, anomaly_test_data)
+  
+  
+  
 #	except:
 #		print('An exception has occured')
 

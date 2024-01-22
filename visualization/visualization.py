@@ -129,10 +129,12 @@ def plot_features(col, dataset):
 
 
 def visualize_data(dataset):
-#	show_data(dataset)
+	show_data(dataset)
+
 	plot_data(dataset)
-	exit()
+
 	plot_target(dataset)
+
 	columns = dataset.columns
 
 	for col in columns:
