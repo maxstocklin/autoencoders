@@ -1,51 +1,26 @@
-import subprocess
-
-def ask_ollama(question):
-    container_name = "your_container_name"  # Replace with your container name or ID
-    command = f'docker exec {container_name} ollama run llama3'
-
-    # Start the process
-    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
-
-    try:
-        # Send the question to the process
-        stdout, stderr = process.communicate(input=question, timeout=30)  # Adjust timeout as needed
-
-        if process.returncode != 0:
-            print(f"Error: {stderr}")
-        else:
-            print(f"Response: {stdout}")
-    except subprocess.TimeoutExpired:
-        process.kill()
-        stdout, stderr = process.communicate()
-        print(f"Process timed out. Output: {stdout}, Error: {stderr}")
-
-
-
-
-# Use Ollama as the base image
-FROM your_ollama_image  # Replace with the actual Ollama image name
-
-# Install Python
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
-    apt-get clean
+# Stage 1: Use a Python base image to install Python and dependencies
+FROM python:3.9-slim as python-build
 
 # Set up a working directory
 WORKDIR /app
 
-# Copy your Python scripts into the container
-COPY . /app
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install any Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Copy your application files
+COPY . .
 
-# Define the entry point (if needed)
+# Stage 2: Use the Ollama base image
+FROM your_ollama_image  # Replace with your actual Ollama image name
+
+# Set up a working directory
+WORKDIR /app
+
+# Copy Python binaries and dependencies from the python-build stage
+COPY --from=python-build /usr/local/bin /usr/local/bin
+COPY --from=python-build /usr/local/lib/python3.9 /usr/local/lib/python3.9
+COPY --from=python-build /app /app
+
+# Set the entry point to run your Python script
 CMD ["python3", "your_script.py"]
-
-
-
-
-
-# Example usage
-ask_ollama("What is the capital of France?")
