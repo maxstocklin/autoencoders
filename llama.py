@@ -21,6 +21,45 @@ FROM your_ollama_image:latest  # Replace with the actual Ollama image name
 # Set up a working directory
 WORKDIR /app
 
+# Copy Python binaries, libraries, and site-packages from the python-base stage
+COPY --from=python-base /usr/local/bin /usr/local/bin
+COPY --from=python-base /usr/local/lib /usr/local/lib
+COPY --from=python-base /usr/lib /usr/lib
+COPY --from=python-base /lib /lib
+COPY --from=python-base /app /app
+
+# Set environment variables to include the necessary library paths
+ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/lib:/lib:${LD_LIBRARY_PATH}"
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Define the entry point to run your Python script
+CMD ["python3", "your_script.py"]
+
+
+
+
+# Stage 1: Start with the company's Python base image
+FROM company_python_image:latest as python-base  # Replace with your company's Python image name
+
+# Set up a working directory
+WORKDIR /app
+
+# Copy your Python requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your application files
+COPY . .
+
+# Check Python installation
+RUN python3 --version && python --version
+
+# Stage 2: Start with the Ollama image
+FROM your_ollama_image:latest  # Replace with the actual Ollama image name
+
+# Set up a working directory
+WORKDIR /app
+
 # Copy Python binaries and libraries from the python-base stage
 COPY --from=python-base /usr/local/bin /usr/local/bin
 COPY --from=python-base /usr/local/lib /usr/local/lib
