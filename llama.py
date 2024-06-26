@@ -1,3 +1,39 @@
+import docker
+
+def ask_ollama(question):
+    client = docker.from_env()
+    container = client.containers.get("ollama")  # Replace with your container name or ID
+    
+    # Using /bin/sh -c to run the command
+    command = '/bin/sh -c "ollama run llama3"'
+    exec_result = container.exec_run(command, stdin=True, tty=True, socket=True)
+    
+    socket = exec_result.output
+    socket._sock.sendall(question.encode() + b'\n')
+    socket._sock.shutdown(1)  # Send EOF
+
+    output = b""
+    while True:
+        data = socket._sock.recv(1024)
+        if not data:
+            break
+        output += data
+
+    socket.close()
+    
+    # Print the response
+    print(f"Response: {output.decode()}")
+
+# Example usage
+ask_ollama("What is the capital of France?")
+
+
+
+
+
+
+
+
 # Stage 1: Use a Python base image to install Python and dependencies
 FROM python:3.9-slim as python-build
 
