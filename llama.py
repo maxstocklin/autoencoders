@@ -20,5 +20,32 @@ def ask_ollama(question):
         stdout, stderr = process.communicate()
         print(f"Process timed out. Output: {stdout}, Error: {stderr}")
 
+
+
+
+# Use Ollama as the base image
+FROM your_ollama_image  # Replace with the actual Ollama image name
+
+# Install Python
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    apt-get clean
+
+# Set up a working directory
+WORKDIR /app
+
+# Copy your Python scripts into the container
+COPY . /app
+
+# Install any Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Define the entry point (if needed)
+CMD ["python3", "your_script.py"]
+
+
+
+
+
 # Example usage
 ask_ollama("What is the capital of France?")
