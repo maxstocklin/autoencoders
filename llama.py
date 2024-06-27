@@ -1,3 +1,57 @@
+
+import docker
+import time
+
+def run_command(container_name, command, input_text):
+    client = docker.from_env()
+
+    # Create an exec instance
+    exec_id = client.api.exec_create(container_name, command, stdin=True, tty=True)
+    
+    # Start the exec instance
+    response = client.api.exec_start(exec_id, detach=False, tty=True, stream=True, socket=False)
+
+    # Send the input to the container's stdin
+    stdin = client.api.exec_inspect(exec_id)['OpenStdin']
+    if stdin:
+        # Use the Docker API to attach and interact with the process
+        sock = client.api.attach_socket(exec_id, params={'stdin': 1, 'stream': 1})
+        sock._sock.sendall(input_text.encode() + b'\n')
+        sock._sock.shutdown(1)  # Close the writing end to signal EOF
+
+        # Read the response
+        output = b""
+        while True:
+            chunk = sock._sock.recv(1024)
+            if not chunk:
+                break
+            output += chunk
+
+        sock.close()
+        return output.decode()
+
+    # If stdin is not open, read the output directly from the response
+    output = b""
+    for chunk in response:
+        output += chunk
+
+    return output.decode()
+
+def ask_ollama(question):
+    container_name = "ollama"  # Replace with your actual container name
+    command = "ollama run llama3"  # Replace with your actual command
+    response = run_command(container_name, command, question)
+    if response:
+        print(f"Response: {response}")
+
+if __name__ == "__main__":
+    question = "What is the capital of France?"
+    ask_ollama(question)
+
+
+
+
+
 docker cp ask_llm.py <container_name>:/app/ask_llm.py
 
 
