@@ -1,3 +1,47 @@
+docker cp ask_llm.py <container_name>:/app/ask_llm.py
+
+
+
+
+
+
+import asyncio
+import subprocess
+
+async def run_command(command, input_text):
+    process = await asyncio.create_subprocess_shell(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    stdout, stderr = await process.communicate(input=input_text.encode())
+
+    if process.returncode != 0:
+        print(f"Error: {stderr.decode()}")
+        return None
+    return stdout.decode()
+
+async def ask_ollama(question):
+    command = 'docker exec -i ollama ollama run llama3'  # Replace with your actual command
+    response = await run_command(command, question)
+    if response:
+        print(f"Response: {response}")
+
+if __name__ == "__main__":
+    question = "What is the capital of France?"
+    asyncio.run(ask_ollama(question))
+
+
+
+
+
+
+
+
+--------
+
 # Stage 1: Start with the company's Python base image
 FROM company_python_image:latest as python-base  # Replace with your company's Python image name
 
