@@ -1,4 +1,46 @@
+import docker
+import time
 
+def run_command(container_name, command, input_text):
+    client = docker.from_env()
+
+    # Create an exec instance
+    exec_id = client.api.exec_create(container_name, command, stdin=True, tty=True)
+    
+    # Start the exec instance and get the socket
+    sock = client.api.exec_start(exec_id, tty=True, socket=True)
+    
+    # Attach to the socket and send the input
+    sock._sock.sendall(input_text.encode() + b'\n')
+    sock._sock.shutdown(1)  # Close the writing end to signal EOF
+
+    output = b""
+    while True:
+        try:
+            chunk = sock._sock.recv(1024)
+            if not chunk:
+                break
+            output += chunk
+        except Exception as e:
+            break
+
+    sock.close()
+    return output.decode()
+
+def ask_ollama(question):
+    container_name = "ollama"  # Replace with your actual container name
+    command = "ollama run llama3"  # Replace with your actual command
+    response = run_command(container_name, command, question)
+    if response:
+        print(f"Response: {response}")
+
+if __name__ == "__main__":
+    question = "What is the capital of France?"
+    ask_ollama(question)
+    
+    
+    
+    
 import docker
 import time
 
